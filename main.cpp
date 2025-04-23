@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -10,10 +9,28 @@
 #include "tile.h"
 #include "board.h"
 #include "welcome.h"
-#include "main.h"
-#include "leaderBoard.h"
+#include "leader.h"
+#include "leaderboard.h"
 using namespace std;
 
+void drawDigits(std::string &digits, sf::Sprite &digitSprite, sf::Texture &digitsTexture, float &currentX, float positionY, sf::RenderWindow &gameWindow, bool isNegative)
+{
+
+    if (isNegative)
+    {
+        digitSprite.setTextureRect(sf::IntRect(10 * 21, 0, 21, digitsTexture.getSize().y));
+        digitSprite.setPosition(currentX - 21, positionY);
+        gameWindow.draw(digitSprite);
+    }
+    for (char c : digits)
+    {
+        int digit = c - '0'; // Convert char to int
+        digitSprite.setTextureRect(sf::IntRect(digit * 21, 0, 21, digitsTexture.getSize().y));
+        digitSprite.setPosition(currentX, positionY);
+        gameWindow.draw(digitSprite);
+        currentX += 21; // Move to the next position
+    }
+}
 int main()
 {
     string boardFile = "files/config.cfg";
@@ -31,12 +48,13 @@ int main()
     int numMines = board[2];
     int width = numColumns * 32;
     int height = (numRows * 32) + 100;
+    int leaderWidth = numColumns * 16;
+    int leaderHeight = (numRows * 16) + 50;
 
     sf::Font font;
     font.loadFromFile("files/font.ttf");
 
     Welcome welcome(width, height, font);
-    leaderBoard leaderBoard(numColumns*16, numRows*+50, font);
 
     string name = welcome.welcomeWindow();
 
@@ -55,20 +73,17 @@ int main()
     sf::Sprite gameSprite;
     sf::Sprite digitSprite;
 
+    sf::Texture loseFace;
+    loseFace.loadFromFile("files/images/face_lose.png");
+    sf::Texture winFace;
+    winFace.loadFromFile("files/images/face_win.png");
     sf::Texture happyTexture;
     happyTexture.loadFromFile("files/images/face_happy.png");
-
-    sf::Texture winTexture;
-    winTexture.loadFromFile("files/images/face_win.png");
-
-    sf::Texture loseTexture;
-    loseTexture.loadFromFile("files/images/face_lose.png");
-
-    float happyPositionX = (numColumns / 2.0 * 32) - 32;
-    float happyPositionY = (numRows + 0.5) * 32;
-    sf::Vector2u happyTextureSize = happyTexture.getSize();
-    float happyEndX = happyPositionX + happyTextureSize.x;
-    float happyEndY = happyPositionY + happyTextureSize.y;
+    float facePositionX = (numColumns / 2.0 * 32) - 32;
+    float facePositionY = (numRows + 0.5) * 32;
+    sf::Vector2u faceTextureSize = happyTexture.getSize();
+    float faceEndX = facePositionX + faceTextureSize.x;
+    float faceEndY = facePositionY + faceTextureSize.y;
 
     sf::Texture debugTexture;
     debugTexture.loadFromFile("files/images/debug.png");
@@ -80,20 +95,20 @@ int main()
 
     sf::Texture pauseTexture;
     pauseTexture.loadFromFile("files/images/pause.png");
+    sf::Texture playTexture;
+    playTexture.loadFromFile("files/images/play.png");
+
     float pausePositionX = numColumns * 32 - 240;
     float pausePositionY = (numRows + 0.5) * 32;
     sf::Vector2u pauseTextureSize = pauseTexture.getSize();
     float pauseEndX = pausePositionX + pauseTextureSize.x;
     float pauseEndY = pausePositionY + pauseTextureSize.y;
 
-    sf::Texture playTexture;
-    playTexture.loadFromFile("files/images/play.png");
-
-    sf::Texture leaderTexture;
-    leaderTexture.loadFromFile("files/images/leaderboard.png");
-    float leaderPositionX = numColumns * 32 - 176;  
+    sf::Texture leader;
+    leader.loadFromFile("files/images/leaderboard.png");
+    float leaderPositionX = numColumns * 32 - 176;
     float leaderPositionY = (numRows + 0.5) * 32;
-    sf::Vector2u leaderTextureSize = leaderTexture.getSize();
+    sf::Vector2u leaderTextureSize = leader.getSize();
     float leaderEndX = leaderPositionX + leaderTextureSize.x;
     float leaderEndY = leaderPositionY + leaderTextureSize.y;
 
@@ -101,30 +116,14 @@ int main()
     digitsTexture.loadFromFile("files/images/digits.png");
     digitSprite.setTexture(digitsTexture);
 
+    float digitY = (numRows + 0.5) * 32 + 16; // Y position for the timer
 
     timer timer;
     while (gameWindow.isOpen())
     {
-
         gameWindow.clear(sf::Color::White);
 
         newBoard.drawGameBoard(gameWindow, debug);
-
-        if (newBoard.getStatus() == 1)
-        {
-            gameSprite.setTexture(winTexture);
-        }
-        else if (newBoard.getStatus() == 2)
-        {
-            gameSprite.setTexture(loseTexture);
-        }
-        else
-        {
-            gameSprite.setTexture(happyTexture);
-        }
-
-        gameSprite.setPosition(happyPositionX, happyPositionY);
-        gameWindow.draw(gameSprite);
 
         gameSprite.setTexture(debugTexture);
         gameSprite.setPosition(debugPositionX, debugPositionY);
@@ -141,7 +140,7 @@ int main()
         gameSprite.setPosition(pausePositionX, pausePositionY);
         gameWindow.draw(gameSprite);
 
-        float digitY = (numRows + 0.5) * 32 + 16; // Y position for the timer
+        gameSprite.setTexture(leader);
 
         // mine counter
         float currentX = 33;
@@ -165,40 +164,53 @@ int main()
 
         currentX = secondsStartX;
         drawDigits(seconds, digitSprite, digitsTexture, currentX, digitY, gameWindow, false);
-        
-        gameSprite.setTexture(leaderTexture);
+
+        gameSprite.setTexture(leader);
         gameSprite.setPosition(leaderPositionX, leaderPositionY);
+        gameWindow.draw(gameSprite);
+
+        if (newBoard.getStatus() == 2)
+        {
+            gameSprite.setTexture(loseFace);
+        }
+        else if (newBoard.getStatus() == 1)
+        {
+            gameSprite.setTexture(winFace);
+        }
+        else
+        {
+            gameSprite.setTexture(happyTexture);
+        }
+        gameSprite.setPosition(facePositionX, facePositionY);
         gameWindow.draw(gameSprite);
 
         sf::Event event;
         while (gameWindow.pollEvent(event))
         {
+            sf::Vector2i mousePosition = sf::Mouse::getPosition(gameWindow);
             if (event.type == sf::Event::Closed)
             {
                 gameWindow.close();
             }
             else if (event.type == sf::Event::MouseButtonPressed)
             {
-                sf::Vector2i mousePosition = sf::Mouse::getPosition(gameWindow);
-
-                if (happyPositionX <= mousePosition.x && mousePosition.x <= happyEndX && happyPositionY <= mousePosition.y && mousePosition.y <= happyEndY)
+                if (newBoard.getStatus()==0 &&  debugPositionX <= mousePosition.x && mousePosition.x <= debugEndX && debugPositionY <= mousePosition.y && mousePosition.y <= debugEndY)
                 {
-                    cout << "Resetting game..." << endl;
+                    cout << "hi" << endl;
                     debug = (!debug);
-                    newBoard.reset();
+                    cout << debugPositionX << " " << debugPositionY << endl;
+                }
+                else if (facePositionX <= mousePosition.x && mousePosition.x <= faceEndX && facePositionY <= mousePosition.y && mousePosition.y <= faceEndY)
+                {
+                    newBoard.resetGame();
                     timer.reset();
                     debug = false;
                 }
                 else if (leaderPositionX <= mousePosition.x && mousePosition.x <= leaderEndX && leaderPositionY <= mousePosition.y && mousePosition.y <= leaderEndY)
                 {
-                    cout << "Opening leaderboard..." << endl;
-                    ScoreEntry scoreEntry;
-                    leaderBoard.drawLeaderBoard(scoreEntry);
-                }
-                else if (debugPositionX <= mousePosition.x && mousePosition.x <= debugEndX && debugPositionY <= mousePosition.y && mousePosition.y <= debugEndY)
-                {
-                    cout << "Debugging..." << endl;
-                    debug = (!debug);
+                    leaderboard leader(leaderWidth, leaderHeight, font);
+                    leader.readData();
+                    leader.leaderWindow();
                 }
                 else if (pausePositionX <= mousePosition.x && mousePosition.x <= pauseEndX && pausePositionY <= mousePosition.y && mousePosition.y <= pauseEndY)
                 {
@@ -214,59 +226,36 @@ int main()
                             timer.pause();
                         }
                     }
+                    newBoard.pauseResume();
                 }
 
-                else if (newBoard.getStatus() == 0 )
+                else if (newBoard.getStatus() == 0)
                 {
-
-                   if (debugPositionX <= mousePosition.x && mousePosition.x <= debugEndX && debugPositionY <= mousePosition.y && mousePosition.y <= debugEndY)
+                    if (0 <= mousePosition.x && mousePosition.x <= width && 0 <= mousePosition.y && mousePosition.y <= height - 100)
                     {
-                        cout << "Debugging..." << endl;
-                        debug = (!debug);
-                    }
-                    else if (pausePositionX <= mousePosition.x && mousePosition.x <= pauseEndX && pausePositionY <= mousePosition.y && mousePosition.y <= pauseEndY)
-                    {
-                        cout << "Pause/Resume..." << endl;
-                        if (timer.isStarted())
-                        {
-                            if (timer.isPaused())
-                            {
-                                timer.resume();
-                            }
-                            else
-                            {
-                                timer.pause();
-                            }
-                        }
-                    }
-                    else if (0 <= mousePosition.x && mousePosition.x <= width && 0 <= mousePosition.y && mousePosition.y <= height - 100)
-                    {
-                        cout << "Opening tile..." << endl;
                         int xIndex = mousePosition.x / 32;
                         int yIndex = mousePosition.y / 32;
-
                         if (!timer.isStarted())
                         {
                             timer.start();
                         }
-
                         if (event.mouseButton.button == sf::Mouse::Left)
                         {
                             newBoard.openTile(xIndex, yIndex);
-                            if (newBoard.getStatus() == 2)
-                            {
-                                timer.end();
-                                cout << "Game Over" << endl;
-                            }
-                            else if (newBoard.isWin())
+                            if (newBoard.isWin())
                             {
                                 newBoard.setStatus(1);
                                 timer.end();
-                                cout << "You win!" << endl;
-                                ScoreEntry scoreEntry(name, elapsed.first, elapsed.second);
-                                leaderBoard.addToBoard(name, elapsed.first, elapsed.second);
-                                leaderBoard.drawLeaderBoard(scoreEntry);
+                                cout << "winner winner" << endl;
+                                cout << name << endl;
+                                leaderboard newLeaderBoard(width, height, font);
+                                newLeaderBoard.addToLeader(name, minutes + ":" + seconds);
+                                newLeaderBoard.leaderWindow();
                             }
+                            else if (newBoard.getStatus() == 2)
+
+                                timer.end();
+                            cout << "Game Over" << endl;
                         }
                         else if (event.mouseButton.button == sf::Mouse::Right)
                         {
@@ -280,23 +269,4 @@ int main()
     }
 
     return 0;
-}
-
-void drawDigits(std::string &digits, sf::Sprite &digitSprite, sf::Texture &digitsTexture, float &currentX, float positionY, sf::RenderWindow &gameWindow, bool isNegative)
-{
-
-    if (isNegative)
-    {
-        digitSprite.setTextureRect(sf::IntRect(10 * 21, 0, 21, digitsTexture.getSize().y));
-        digitSprite.setPosition(currentX - 21, positionY);
-        gameWindow.draw(digitSprite);
-    }
-    for (char c : digits)
-    {
-        int digit = c - '0'; // Convert char to int
-        digitSprite.setTextureRect(sf::IntRect(digit * 21, 0, 21, digitsTexture.getSize().y));
-        digitSprite.setPosition(currentX, positionY);
-        gameWindow.draw(digitSprite);
-        currentX += 21; // Move to the next position
-    }
 }

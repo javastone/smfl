@@ -37,7 +37,6 @@ public:
 
     void start()
     {
-        // if it's not timing
         if (!started)
         {
             // chrono::high_resolution_clock::now(); is the current time from clock

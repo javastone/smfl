@@ -15,14 +15,17 @@ class Board
     vector<tile> tiles;
     int rows, cols, mines;
     sf::Texture hiddenTexture, revealedTexture, mineTexture, flagTexture, num1Txture, num2Txture, num3Txture, num4Txture, num5Txture, num6Txture, num7Txture, num8Txture;
-    int gameStatus; //1 = win, 2 = fail, 0 = playing
+    int gameStatus; // 1 = win, 2 = fail, 0 = playing
     int minesNotFlagged;
+    bool paused;
+
 public:
     Board() {};
     Board(int c, int r, int m) : cols(c), rows(r), mines(m), minesNotFlagged(m)
     {
         gameStatus = 0;
-        cout << " cols: " << cols << "rows: " << rows << " mines: " << mines << endl;
+        paused = false;
+
         loadTextures();
         vector<int> minePosition = generate_unique_random_numbers();
         for (int r = 0; r < rows; r++)
@@ -39,6 +42,11 @@ public:
         }
     }
 
+    void pause()
+    {
+        paused = !paused ;
+    }
+
     vector<tile> getTiles()
     {
         return tiles;
@@ -52,11 +60,13 @@ public:
         return cols;
     }
 
-    int getStatus() {
+    int getStatus()
+    {
         return gameStatus;
     }
 
-    void setStatus(int status) {
+    void setStatus(int status)
+    {
         gameStatus = status;
     }
 
@@ -172,16 +182,16 @@ public:
         return totalMines;
     }
 
-
-
-    void openTile(int x, int y) {
+    void openTile(int x, int y)
+    {
         tile &tile = tiles.at(y * cols + x);
 
         // Don't open if already opened
         if (tile.getOpen())
             return;
 
-        if (!tile.getFlagged()) {
+        if (!tile.getFlagged())
+        {
             tile.setOpen(true);
 
             cout << "Opening tile: (" << x << ", " << y << ")" << endl;
@@ -215,16 +225,13 @@ public:
         }
     }
 
-
     void flagTile(int x, int y)
     {
         tile &tile = tiles.at(y * cols + x);
         tile.setFlagged(!tile.getFlagged());
-
         if (tile.getFlagged())
         {
             minesNotFlagged--;
-         
         }
         else
         {
@@ -260,20 +267,30 @@ public:
         num8Txture.loadFromFile("files/images/number_8.png");
     }
 
-    bool isWin() {
-        for (int i = 0; i < tiles.size(); i++) {
-            if (!tiles.at(i).getOpen() && !tiles.at(i).getMine()) {
+    bool isWin()
+    {
+        for (int i = 0; i < tiles.size(); i++)
+        {
+            cout << tiles.at(i).getOpen() << endl;
+            cout << tiles.at(i).getMine() << endl;
+            if (!tiles.at(i).getOpen() && !tiles.at(i).getMine())
+            {
                 return false;
             }
         }
-        timer.end();
         return true;
+    }
+
+    void resetGame()
+    {
+        *this = Board(cols, rows, mines);
     }
 
     void drawGameBoard(sf::RenderWindow &gameWindow, bool isDebug)
     {
         sf::Sprite mineSprite;
-        for (int i = 0; i < getTiles().size(); i++) {
+        for (int i = 0; i < getTiles().size(); i++)
+        {
             tile tile = getTiles().at(i);
             mineSprite.setPosition(tile.getX() * 32, tile.getY() * 32);
             mineSprite.setTexture(revealedTexture);
@@ -330,7 +347,8 @@ public:
 
             gameWindow.draw(mineSprite);
 
-            if(tile.getFlagged())
+
+            if (tile.getFlagged())
             {
                 mineSprite.setTexture(flagTexture);
                 gameWindow.draw(mineSprite);
@@ -340,12 +358,14 @@ public:
             {
                 mineSprite.setTexture(mineTexture);
                 gameWindow.draw(mineSprite);
-
-            } else if (gameStatus == 1) {
-
+            }
+            if (paused)
+            {
+                mineSprite.setTexture(revealedTexture);
+                gameWindow.draw(mineSprite);
             }
         }
     }
 };
 
-#endif //BOARD_H
+#endif // BOARD_H
