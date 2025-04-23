@@ -82,7 +82,7 @@ public:
         }
     }
 
-    pair<int, int> get_elapsed_time() const
+    int get_elapsed_time() const
     {
         auto now = std::chrono::high_resolution_clock::now();
 
@@ -91,10 +91,8 @@ public:
         {
             total_elapsed = chrono::duration_cast<chrono::seconds>(now - start_time + elapsed_time);
         }
-        int minutes = chrono::duration_cast<chrono::minutes>(total_elapsed).count();
-        int seconds = total_elapsed.count() % 60;
-
-        return make_pair(minutes, seconds);
+   
+        return total_elapsed.count();
     }
 };
 #endif // TIMER_H

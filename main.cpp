@@ -152,18 +152,21 @@ int main()
         drawDigits(mineCounter, digitSprite, digitsTexture, currentX, digitY, gameWindow, remainingMines < 0);
 
         // timer
-        pair<int, int> elapsed = timer.get_elapsed_time();
+        int elapsed = timer.get_elapsed_time();
         float minutesStartX = numColumns * 32 - 97; // Starting X position for minutes
         float secondsStartX = numColumns * 32 - 54; // Starting X position for seconds
 
-        string minutes = (elapsed.first < 10) ? "0" + to_string(elapsed.first) : to_string(elapsed.first);
-        string seconds = (elapsed.second < 10) ? "0" + to_string(elapsed.second) : to_string(elapsed.second);
+        int minutes = elapsed / 60;
+        int seconds = elapsed % 60;
+
+        string minutesStr = (minutes < 10) ? "0" + to_string(minutes) : to_string(minutes);
+        string secondsStr = (seconds < 10) ? "0" + to_string(seconds) : to_string(seconds);
 
         currentX = minutesStartX;
-        drawDigits(minutes, digitSprite, digitsTexture, currentX, digitY, gameWindow, false);
+        drawDigits(minutesStr, digitSprite, digitsTexture, currentX, digitY, gameWindow, false);
 
         currentX = secondsStartX;
-        drawDigits(seconds, digitSprite, digitsTexture, currentX, digitY, gameWindow, false);
+        drawDigits(secondsStr, digitSprite, digitsTexture, currentX, digitY, gameWindow, false);
 
         gameSprite.setTexture(leader);
         gameSprite.setPosition(leaderPositionX, leaderPositionY);
@@ -222,7 +225,7 @@ int main()
                                 timer.pause();
                             }
                             newBoard.pauseResume();
-                        }  
+                        }
                     }
                     else if (!timer.isPaused() && debugPositionX <= mousePosition.x && mousePosition.x <= debugEndX && debugPositionY <= mousePosition.y && mousePosition.y <= debugEndY)
                     {
@@ -247,7 +250,7 @@ int main()
                                 cout << "winner winner" << endl;
                                 cout << name << endl;
                                 leaderboard newLeaderBoard(width, height, font);
-                                newLeaderBoard.addToLeader(name, minutes + ":" + seconds);
+                                newLeaderBoard.addToLeader(name, minutesStr + ":" + secondsStr);
                                 newLeaderBoard.leaderWindow();
                             }
                             else if (newBoard.getStatus() == 2)
