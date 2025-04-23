@@ -194,13 +194,7 @@ int main()
             }
             else if (event.type == sf::Event::MouseButtonPressed)
             {
-                if (newBoard.getStatus()==0 &&  debugPositionX <= mousePosition.x && mousePosition.x <= debugEndX && debugPositionY <= mousePosition.y && mousePosition.y <= debugEndY)
-                {
-                    cout << "hi" << endl;
-                    debug = (!debug);
-                    cout << debugPositionX << " " << debugPositionY << endl;
-                }
-                else if (facePositionX <= mousePosition.x && mousePosition.x <= faceEndX && facePositionY <= mousePosition.y && mousePosition.y <= faceEndY)
+                if (facePositionX <= mousePosition.x && mousePosition.x <= faceEndX && facePositionY <= mousePosition.y && mousePosition.y <= faceEndY)
                 {
                     newBoard.resetGame();
                     timer.reset();
@@ -212,26 +206,30 @@ int main()
                     leader.readData();
                     leader.leaderWindow();
                 }
-                else if (pausePositionX <= mousePosition.x && mousePosition.x <= pauseEndX && pausePositionY <= mousePosition.y && mousePosition.y <= pauseEndY)
-                {
-                    cout << "Pause/Resume..." << endl;
-                    if (timer.isStarted())
-                    {
-                        if (timer.isPaused())
-                        {
-                            timer.resume();
-                        }
-                        else
-                        {
-                            timer.pause();
-                        }
-                    }
-                    newBoard.pauseResume();
-                }
-
                 else if (newBoard.getStatus() == 0)
                 {
-                    if (0 <= mousePosition.x && mousePosition.x <= width && 0 <= mousePosition.y && mousePosition.y <= height - 100)
+                    if (pausePositionX <= mousePosition.x && mousePosition.x <= pauseEndX && pausePositionY <= mousePosition.y && mousePosition.y <= pauseEndY)
+                    {
+                        cout << "Pause/Resume..." << endl;
+                        if (timer.isStarted())
+                        {
+                            if (timer.isPaused())
+                            {
+                                timer.resume();
+                            }
+                            else
+                            {
+                                timer.pause();
+                            }
+                            newBoard.pauseResume();
+                        }  
+                    }
+                    else if (!timer.isPaused() && debugPositionX <= mousePosition.x && mousePosition.x <= debugEndX && debugPositionY <= mousePosition.y && mousePosition.y <= debugEndY)
+                    {
+                        debug = (!debug);
+                    }
+
+                    else if (!timer.isPaused() && 0 <= mousePosition.x && mousePosition.x <= width && 0 <= mousePosition.y && mousePosition.y <= height - 100)
                     {
                         int xIndex = mousePosition.x / 32;
                         int yIndex = mousePosition.y / 32;
